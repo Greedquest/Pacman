@@ -11,12 +11,14 @@ Attribute VB_Exposed = False
 Option Explicit
 Private Const mModuleName As String = "GameController"
 
-Private Const SECONDS_PER_TICK As Double = 0.06 '// sets a minimum amount of time (in seconds) that will pass between game ticks
+Private Const MILLISECONDS_PER_TICK As Double = 60 '// sets a minimum amount of time (in milliseconds) that will pass between game ticks
 Private Const TICK_CYCLE_RESOLUTION As Double = 10 '// helps faciliate game pieces moving at different speeds
 
 '@MemberAttribute VB_VarHelpID, -1
 Public WithEvents UIAdapter As ViewAdapter
 Attribute UIAdapter.VB_VarHelpID = -1
+Private WithEvents gameLoopTicker As Timing.Metronome
+Attribute gameLoopTicker.VB_VarHelpID = -1
 
 Public Enum Direction
     dNone = 0
@@ -42,10 +44,15 @@ Private this As TGameController
 Public Sub StartGame()
     '// this is here to temporarily provide a way for me to kick off the game from code
     UIAdapter_GameStarted
+    
+    '//play intro
+    this.TickCounter = 0
+    gameLoopTicker.Start
 End Sub
 
 Private Sub Class_Initialize()
     Set this.GamePieces = New Collection
+    Set gameLoopTicker = Metronome.Create(MILLISECONDS_PER_TICK, delayedStart:=True)
 End Sub
 
 Private Sub Class_Terminate()
@@ -60,11 +67,19 @@ Private Sub Class_Terminate()
     Set UIAdapter = Nothing
 End Sub
 
+Private Sub gameLoopTicker_Tick()
+    this.TickCounter = this.TickCounter + 1
+    'If  TickCounter = MaxCycles Then  TickCounter = 0
+    If this.IsGameOver Then
+        Set gameLoopTicker = Nothing
+    Else
+        OnTick
+    End If
+End Sub
+
 '// This is the main engine of the game that is called repeatedly until the game is over
-Private Sub Tick()
-    Dim t As Double
-    
-    t = Timer
+Private Sub OnTick()
+
     
     Dim character As IGamePiece
     
@@ -93,13 +108,8 @@ Private Sub Tick()
     '// update the view
     UIAdapter.AsCommandSender.UpdateComponents this.GamePieces
     
-    
-    '// ensure a minimum amount of time has passed
-    Do
-    DoEvents
-    Loop Until Timer > t + SECONDS_PER_TICK
-End Sub
 
+End Sub
 
 '//ViewEvents Handling
 Private Sub UIAdapter_DirectionalKeyPressed(vbKeyCode As KeyCode)
@@ -161,23 +171,9 @@ Private Sub UIAdapter_GameStarted()
     this.GamePieces.Add clyde
     UIAdapter.AsCommandSender.CreateGhost clyde
     
-    '//play intro
-    
-    
-    this.TickCounter = 0
-    
-    Do While Not this.IsGameOver
-    
-        'DoEvents
-        'If  TickCounter = MaxCycles Then  TickCounter = 0
-        this.TickCounter = this.TickCounter + 1
-        Tick
-        'DoEvents
-    Loop
+
         
 End Sub
-
-
 
 '//Private Helpers
 Private Function BuildGhost(Name As String, _

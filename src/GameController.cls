@@ -11,13 +11,13 @@ Attribute VB_Exposed = False
 Option Explicit
 Private Const mModuleName As String = "GameController"
 
-Private Const MILLISECONDS_PER_TICK As Double = 60 '// sets a minimum amount of time (in milliseconds) that will pass between game ticks
+Private Const MILLISECONDS_PER_TICK As Double = 0 '// sets a minimum amount of time (in milliseconds) that will pass between game ticks
 Private Const TICK_CYCLE_RESOLUTION As Double = 10 '// helps faciliate game pieces moving at different speeds
 
 '@MemberAttribute VB_VarHelpID, -1
 Public WithEvents UIAdapter As ViewAdapter
 Attribute UIAdapter.VB_VarHelpID = -1
-Private WithEvents gameLoopTicker As Timing.Metronome
+Private WithEvents gameLoopTicker As timing.Metronome
 Attribute gameLoopTicker.VB_VarHelpID = -1
 
 Public Enum Direction
@@ -73,7 +73,9 @@ Private Sub gameLoopTicker_Tick()
     If this.IsGameOver Then
         Set gameLoopTicker = Nothing
     Else
+        On Error Resume Next
         OnTick
+        'PrintMessageQueue Application.hWnd
     End If
 End Sub
 
